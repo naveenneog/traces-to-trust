@@ -1,0 +1,115 @@
+// KQL Queries for Application Insights Dashboards
+// Use in Azure Portal → App Insights → Logs
+// ═══════════════════════════════════════════════
+
+// ─── 1. Agent Invocation Overview ───
+// Shows all agent invocations with duration, token usage, and status
+dependencies
+| where name startswith "invoke_agent"
+| extend agentName = tostring(customDimensions["gen_ai.agent.name"])
+| extend model = tostring(customDimensions["gen_ai.request.model"])
+| extend inputTokens = toint(customDimensions["gen_ai.usage.input_tokens"])
+| extend outputTokens = toint(customDimensions["gen_ai.usage.output_tokens"])
+| extend totalTokens = inputTokens + outputTokens
+| project timestamp, agentName, model, duration, inputTokens, outputTokens, totalTokens, success
+| order by timestamp desc
+| take 50
+
+
+// ─── 2. Tool Execution Performance ───
+// Latency breakdown by tool — find slow tools
+dependencies
+| where customDimensions["gen_ai.operation.name"] == "execute_tool"
+| extend toolName = tostring(customDimensions["gen_ai.tool.name"])
+| summarize
+    avgDuration = avg(duration),
+    p95Duration = percentile(duration, 95),
+    p99Duration = percentile(duration, 99),
+    callCount = count(),
+    errorCount = countif(success == false)
+  by toolName
+| extend errorRate = round(100.0 * errorCount / callCount, 2)
+| order by callCount desc
+
+
+// ─── 3. Token Consumption Over Time ───
+// Track token spend trends for cost attribution
+dependencies
+| where customDimensions["gen_ai.operation.name"] == "chat"
+| extend model = tostring(customDimensions["gen_ai.request.model"])
+| extend inputTokens = toint(customDimensions["gen_ai.usage.input_tokens"])
+| extend outputTokens = toint(customDimensions["gen_ai.usage.output_tokens"])
+| summarize
+    totalInput = sum(inputTokens),
+    totalOutput = sum(outputTokens),
+    totalCalls = count()
+  by bin(timestamp, 1h), model
+| order by timestamp desc
+
+
+// ─── 4. Agent Span Hierarchy (Trace View) ───
+// Reconstruct the full agent execution tree for a single trace
+dependencies
+| where operation_Id == "<YOUR_TRACE_ID>"
+| extend opName = tostring(customDimensions["gen_ai.operation.name"])
+| extend toolName = tostring(customDimensions["gen_ai.tool.name"])
+| extend agentName = tostring(customDimensions["gen_ai.agent.name"])
+| project timestamp, name, duration, opName, agentName, toolName, operation_ParentId
+| order by timestamp asc
+
+
+// ─── 5. Governance Audit Trail ───
+// All data access events with user attribution
+customEvents
+| where name == "data.access.audit"
+| extend table = tostring(customDimensions["table"])
+| extend operation = tostring(customDimensions["operation"])
+| extend user = tostring(customDimensions["user"])
+| extend recordsAccessed = toint(customDimensions["records_accessed"])
+| project timestamp, user, table, operation, recordsAccessed
+| order by timestamp desc
+
+
+// ─── 6. Content Safety Dashboard ───
+// Monitor safety filter results across all LLM calls
+customEvents
+| where name == "content.safety.check"
+| extend hate = tostring(customDimensions["hate"])
+| extend violence = tostring(customDimensions["violence"])
+| extend selfHarm = tostring(customDimensions["self_harm"])
+| extend sexual = tostring(customDimensions["sexual"])
+| summarize
+    totalChecks = count(),
+    hateFlagged = countif(hate != "safe"),
+    violenceFlagged = countif(violence != "safe"),
+    selfHarmFlagged = countif(selfHarm != "safe"),
+    sexualFlagged = countif(sexual != "safe")
+  by bin(timestamp, 1h)
+
+
+// ─── 7. MCP Call Performance ───
+// Track MCP protocol calls and latency
+dependencies
+| where customDimensions has "mcp.method.name"
+| extend mcpMethod = tostring(customDimensions["mcp.method.name"])
+| extend toolName = tostring(customDimensions["gen_ai.tool.name"])
+| extend mcpVersion = tostring(customDimensions["mcp.protocol.version"])
+| summarize
+    avgDuration = avg(duration),
+    p95Duration = percentile(duration, 95),
+    callCount = count()
+  by mcpMethod, toolName
+| order by callCount desc
+
+
+// ─── 8. Error Analysis ───
+// Find failed agent runs with error details
+dependencies
+| where success == false
+| extend opName = tostring(customDimensions["gen_ai.operation.name"])
+| extend errorType = tostring(customDimensions["error.type"])
+| extend agentName = tostring(customDimensions["gen_ai.agent.name"])
+| extend toolName = tostring(customDimensions["gen_ai.tool.name"])
+| project timestamp, opName, agentName, toolName, errorType, duration
+| order by timestamp desc
+| take 100

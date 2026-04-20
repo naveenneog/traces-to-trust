@@ -1,0 +1,567 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Traces to Trust — Session Guide</title>
+<style>
+:root { --bg: #0f1419; --surface: #1a1f2e; --surface2: #242b3d; --border: #2d3548; --text: #e4e8f1; --muted: #8892a4; --accent: #4fc3f7; --green: #66bb6a; --orange: #ffa726; --red: #ef5350; --purple: #ab47bc; --yellow: #fff176; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 1060px; margin: 0 auto; padding: 32px 24px; }
+
+/* Header */
+.hero { text-align: center; padding: 48px 0 32px; border-bottom: 2px solid var(--accent); margin-bottom: 40px; }
+.hero h1 { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero .sub { color: var(--muted); font-size: 16px; margin-top: 8px; }
+.hero .meta { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+.hero .meta span { background: var(--surface); padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid var(--border); }
+
+/* Timeline */
+.timeline { position: relative; }
+.timeline::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 3px; background: var(--border); border-radius: 2px; }
+.segment { position: relative; margin-bottom: 32px; padding-left: 60px; }
+.segment .dot { position: absolute; left: 16px; top: 6px; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--accent); background: var(--bg); z-index: 1; }
+.segment.demo .dot { background: var(--red); border-color: var(--red); }
+.segment .time { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.segment h2 { font-size: 20px; font-weight: 700; margin: 4px 0 8px; }
+.segment .content { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 8px; }
+.segment .content p { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+.segment .content ul { list-style: none; padding: 0; }
+.segment .content li { padding: 4px 0; font-size: 14px; }
+.segment .content li::before { content: '→'; color: var(--accent); margin-right: 8px; }
+
+/* Demo box */
+.demo-box { background: var(--surface2); border: 2px solid var(--red); border-radius: 12px; padding: 20px; margin-top: 12px; }
+.demo-box h3 { color: var(--red); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.demo-box code { display: block; background: #0d1117; color: var(--green); padding: 12px 16px; border-radius: 8px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 13px; margin: 8px 0; white-space: pre; overflow-x: auto; }
+.demo-box .notes { color: var(--orange); font-size: 13px; font-style: italic; }
+
+/* Speaker notes */
+.speaker-notes { background: linear-gradient(135deg, rgba(255,241,118,0.06), rgba(255,167,38,0.06)); border: 1px dashed var(--orange); border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+.speaker-notes .label { color: var(--orange); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.speaker-notes p { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+.speaker-notes strong { color: var(--text); }
+.speaker-notes em { color: var(--yellow); font-style: italic; }
+
+/* Live output */
+.live-output { background: #0d1117; border: 1px solid var(--green); border-radius: 10px; padding: 16px 20px; margin: 12px 0; overflow-x: auto; }
+.live-output .label { color: var(--green); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.live-output pre { color: var(--green); font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; white-space: pre; }
+.live-output .hl { color: var(--accent); }
+.live-output .val { color: var(--orange); }
+
+/* Key insight boxes */
+.insight { background: linear-gradient(135deg, rgba(79,195,247,0.1), rgba(171,71,188,0.1)); border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+.insight .label { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.insight .quote { font-size: 16px; font-style: italic; margin-top: 6px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+
+/* Footer */
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 32px 0; border-top: 1px solid var(--border); margin-top: 40px; }
+.resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 16px; }
+.resource-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.resource-card h4 { font-size: 14px; color: var(--accent); margin-bottom: 6px; }
+.resource-card p { font-size: 12px; color: var(--muted); }
+
+/* Print / presenter mode */
+@media print {
+  body { background: #fff; color: #222; }
+  .speaker-notes { border-color: #cc8800; background: #fff8e1; }
+  .live-output { background: #f5f5f5; border-color: #4caf50; }
+  .live-output pre { color: #1b5e20; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>From Traces to Trust</h1>
+  <p class="sub">Agentic Observability with OpenTelemetry</p>
+  <div class="meta">
+    <span>24xAI APAC</span>
+    <span>Apr 21, 2026 | 11:30 AM</span>
+    <span>60 minutes</span>
+    <span>Speaker: Naveen Gopalakrishna</span>
+  </div>
+</div>
+
+<div class="timeline">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- OPENING -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">0:00 — 5 min</div>
+  <h2>Opening: The Black Box Problem</h2>
+  <div class="content">
+    <p>Hook the audience with the gap between deploying agents and understanding them.</p>
+    <ul>
+      <li>Traditional apps: deterministic, well-understood observability</li>
+      <li>AI agents: non-deterministic, LLM-decided tool calls, opaque reasoning</li>
+      <li><strong>Your story:</strong> Cognizant's journey from AppDynamics to App Insights for agent observability</li>
+      <li>Thesis: "Standardized traces are the bridge from 'it works' to 'we trust it'"</li>
+    </ul>
+  </div>
+  <div class="insight">
+    <div class="label">Opening Line</div>
+    <div class="quote">"Raise your hand if you've deployed an AI agent. Now keep it raised if you can tell me exactly why it called a specific tool last Thursday at 3 PM."</div>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Pause after the hand-raise.</strong> Let the gap sink in. The audience should feel the disconnect.</p>
+    <p>Mention Cognizant briefly: <em>"I was working with Cognizant — 100+ apps on AppDynamics, migrating to App Insights. The first question their governance team asked: 'Can we see what the agent accessed and why?' That question drove this entire talk."</em></p>
+    <p><strong>Transition:</strong> "So let's start with why agent observability is fundamentally different from everything we've done before."</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 1 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">5:00 — 10 min</div>
+  <h2>Section 1: Why Agent Observability is Different</h2>
+  <div class="content">
+    <table>
+      <tr><th>Dimension</th><th>Traditional App</th><th>AI Agent</th></tr>
+      <tr><td>Execution path</td><td>Deterministic</td><td>Non-deterministic</td></tr>
+      <tr><td>Tool calls</td><td>Predefined in code</td><td>LLM-decided at runtime</td></tr>
+      <tr><td>Data access</td><td>Code-controlled</td><td>Agent-initiated</td></tr>
+      <tr><td>Failure mode</td><td>Exception → stack trace</td><td>Wrong tool → wrong answer</td></tr>
+      <tr><td>Latency</td><td>Predictable</td><td>Variable (thinking time)</td></tr>
+    </table>
+    <p>Introduce the Trust Pyramid: Instrumentation → Tracing → Monitoring → Debugging → Governance → Trust</p>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Walk the table row by row.</strong> Each row is a shift in mental model.</p>
+    <p>Key line for "Tool calls" row: <em>"When your agent decides to call lookup_customer instead of get_weather, that's not a bug — it's the agent reasoning. But without traces, you can't tell good reasoning from bad."</em></p>
+    <p>For the Trust Pyramid: <em>"Trust is built bottom-up. You can't have governance without debugging, and you can't debug without traces. We're going to build this pyramid live today."</em></p>
+    <p><strong>Transition:</strong> "So what does the standard look like? Let me show you the OTel GenAI semantic conventions."</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 2 + LIVE DEMOS 1, 2 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">15:00 — 15 min</div>
+  <h2>Section 2: OTel GenAI Semantic Conventions</h2>
+  <div class="content">
+    <p>Deep dive into the three span types for agentic observability:</p>
+    <ul>
+      <li><strong>invoke_agent</strong> — agent.name, agent.id, agent.version, provider.name</li>
+      <li><strong>chat</strong> — request.model, response.model, usage.input/output_tokens</li>
+      <li><strong>execute_tool</strong> — tool.name, tool.call.id, arguments, result (opt-in)</li>
+    </ul>
+    <p>Show the span hierarchy: invoke_agent → chat (plan) → execute_tool* → chat (synthesize)</p>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Before the demo:</strong> Explain the 3 span types on the slide. <em>"Think of invoke_agent as the envelope, chat as the LLM thinking, and execute_tool as the hands doing the work."</em></p>
+    <p>These are not custom — they're part of the <strong>OTel GenAI semantic conventions spec</strong>. Any OTel-compatible backend renders them.</p>
+  </div>
+
+  <!-- DEMO 1 -->
+  <div class="demo-box">
+    <h3>&#x1F534; LIVE DEMO 1: Basic Tracing — Real gpt-5.1 Call (3 min)</h3>
+    <code>python live/01_basic_tracing.py</code>
+    <p>Single chat completion with manual GenAI span instrumentation. Real Azure OpenAI call via managed identity.</p>
+    <p class="notes">Uses DefaultAzureCredential — no API key. Shows the atomic unit of agent tracing.</p>
+  </div>
+  <div class="live-output">
+    <div class="label">Expected Live Output — Demo 1</div>
+<pre>
+<span class="hl">"name"</span>: <span class="val">"chat gpt-5.1"</span>,
+<span class="hl">"kind"</span>: <span class="val">"SpanKind.CLIENT"</span>,
+<span class="hl">"status"</span>: { "status_code": "UNSET" },
+<span class="hl">"attributes"</span>: {
+    "gen_ai.operation.name":     <span class="val">"chat"</span>,
+    "gen_ai.system":             <span class="val">"openai"</span>,
+    "gen_ai.request.model":      <span class="val">"gpt-5.1"</span>,
+    "gen_ai.response.model":     <span class="val">"gpt-5.1-2025-11-13"</span>,
+    "gen_ai.response.id":        <span class="val">"chatcmpl-DWfwux74sn..."</span>,
+    "gen_ai.usage.input_tokens": <span class="val">36</span>,
+    "gen_ai.usage.output_tokens":<span class="val">89</span>,
+    "server.address":            <span class="val">"https://ai-contosohub530569751908.openai.azure.com/"</span>
+}
+
+Response: OpenTelemetry is an open-source standard and toolkit for collecting,
+formatting, and exporting telemetry data (traces, metrics, logs) from software
+systems. For AI agents, it's important because it provides consistent,
+vendor-neutral observability...
+
+Tokens: <span class="val">36</span> in / <span class="val">89</span> out
+</pre>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes — Demo 1</div>
+    <p><strong>Point at the span output as it appears:</strong></p>
+    <p>1. <em>"gen_ai.operation.name: chat — this tells any backend this is a model inference call."</em></p>
+    <p>2. <em>"gen_ai.request.model vs gen_ai.response.model — you asked for gpt-5.1, you got gpt-5.1-2025-11-13. The actual model version is captured."</em></p>
+    <p>3. <em>"36 input, 89 output tokens — that's your cost signal right there. At scale, this becomes your budget dashboard."</em></p>
+    <p>4. <em>"server.address — you know exactly which Azure endpoint served this. Multi-region? You can trace latency per region."</em></p>
+    <p><strong>Transition:</strong> "That's the atom. Now let's see how atoms compose into a full agent workflow."</p>
+  </div>
+
+  <!-- DEMO 2 -->
+  <div class="demo-box">
+    <h3>&#x1F534; LIVE DEMO 2: Agent Workflow — Real Tool Calling (5 min)</h3>
+    <code>python live/02_agent_workflow.py</code>
+    <p>Customer Success Agent: LLM plans tool calls → executes 3 tools → LLM synthesizes briefing. Real gpt-5.1 function calling.</p>
+    <p class="notes">Hero demo. The LLM decides which tools to call — this is NOT scripted. Point out parent-child trace IDs.</p>
+  </div>
+  <div class="live-output">
+    <div class="label">Expected Live Output — Demo 2</div>
+<pre>
+<span class="hl">Scenario:</span> Customer Success Agent preparing an account briefing
+<span class="hl">Query:</span> 'Prepare a briefing for Acme Corp (C-1001) including weather at their HQ in Singapore'
+
+[Step 1] Planning — LLM deciding tool calls...
+  LLM requested <span class="val">3</span> tool call(s):
+    → lookup_customer({"customer_id": "C-1001"})
+    → get_purchase_history({"customer_id": "C-1001", "limit": 3})
+    → get_weather({"location": "Singapore"})
+
+[Step 2] Executing tool: lookup_customer...
+    → Found: Acme Corp (Enterprise, APAC)
+
+[Step 3] Executing tool: get_purchase_history...
+    → 3 recent purchases
+
+[Step 4] Executing tool: get_weather...
+    → Sunny, 31°C
+
+[Step 5] Synthesizing briefing from tool results...
+
+── Agent Response ──
+<span class="val">Briefing for Acme Corp (Customer ID: C-1001)
+
+1. Customer Overview
+- Name: Acme Corp | Tier: Enterprise | Region: APAC | ARR: $450,000
+
+2. Recent Purchase History
+- Foundry Agent Service — $37,153
+- Foundry Agent Service — $22,623
+- Azure OpenAI — $16,538
+
+3. Weather at HQ (Singapore)
+- Conditions: Sunny | Temperature: 31°C | Humidity: 54%</span>
+
+<span class="hl">SPAN HIERARCHY:</span>
+  └── invoke_agent CustomerSuccessAgent
+      ├── chat gpt-5.1  (planning — LLM chose tools)
+      ├── execute_tool lookup_customer
+      ├── execute_tool get_purchase_history
+      ├── execute_tool get_weather
+      └── chat gpt-5.1  (synthesis — final briefing)
+
+  Total tokens: <span class="val">626</span> in / <span class="val">330</span> out
+</pre>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes — Demo 2 (Hero Demo)</div>
+    <p><strong>This is the money demo. Slow down here.</strong></p>
+    <p>1. <em>"Step 1 — I sent a user query plus tool definitions. The LLM decided to call all 3 tools. I didn't script that. That's the non-determinism we talked about."</em></p>
+    <p>2. <em>"Look at the span hierarchy at the bottom. invoke_agent is the root. Under it: two chat spans (planning + synthesis) and three execute_tool spans. Every span shares the same trace_id."</em></p>
+    <p>3. <em>"gen_ai.tool.call.arguments captures what was sent. gen_ai.tool.call.result captures what came back. This is opt-in — you control whether to record it."</em></p>
+    <p>4. <em>"626 input, 330 output tokens total. That's on the agent span — aggregated from both LLM calls. This is your cost attribution at the agent level."</em></p>
+    <p>5. Point out the <strong>parent_id chain</strong>: each child span's parent_id matches the agent span's span_id. <em>"One trace, one hierarchy, full reconstruction."</em></p>
+    <p><strong>Key line:</strong> <em>"This is the Rosetta Stone of agent debugging. Every tool call, every model inference, every decision — in a standard format any OTel backend can render."</em></p>
+    <p><strong>Transition:</strong> "Great, so we can see our agent. But your CISO doesn't read console logs. Let's send this to App Insights with governance-grade audit trails."</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 3 + LIVE DEMO 3 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">30:00 — 10 min</div>
+  <h2>Section 3: App Insights + Governance Audit Trails</h2>
+  <div class="content">
+    <ul>
+      <li>Standard OTel → Azure Monitor pipeline via <code style="display:inline;background:var(--surface2);padding:2px 6px;border-radius:4px;margin:0;">AzureMonitorTraceExporter</code></li>
+      <li>Custom governance attributes: user.id, data.classification, compliance.tags</li>
+      <li>Data access audit events with table, operation, user</li>
+      <li>Content safety check events (hate/violence/self_harm/sexual)</li>
+      <li>Action approval tracking (HITL) with approver + timestamp</li>
+      <li>Cost attribution per LLM call with estimated USD</li>
+    </ul>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Before running demo:</strong> <em>"Your CISO doesn't read console logs. Your compliance team needs queryable audit trails. Let me show you what governance-grade observability looks like."</em></p>
+    <p>Explain the pattern: OTel gives structure, you add governance semantics your org needs. These are custom attributes on standard spans — not a new framework.</p>
+  </div>
+
+  <!-- DEMO 3 -->
+  <div class="demo-box">
+    <h3>&#x1F534; LIVE DEMO 3: Governance + App Insights — Real LLM, Real Export (5 min)</h3>
+    <code>python live/03_appinsights.py</code>
+    <p>Governed agent: data access audit → real LLM call with cost tracking → HITL-gated email action. Exported to App Insights.</p>
+    <p class="notes">Prep: Have Azure Portal → App Insights → Transaction Search open in a browser tab. Show KQL queries from 05_dashboard_queries.kql afterwards.</p>
+  </div>
+  <div class="live-output">
+    <div class="label">Expected Live Output — Demo 3</div>
+<pre>
+✅ Azure Monitor exporter configured
+
+<span class="hl">[1/3] Looking up customer (audit-logged)...</span>
+    → Acme Corp accessed (Enterprise, APAC, ARR: $450,000)
+
+    Span attributes:
+      governance.data.accessed:     <span class="val">"customer_records"</span>
+      governance.data.sensitivity:  <span class="val">"PII"</span>
+    Event: <span class="val">data.access.audit</span>
+      table: customers | operation: read | records: 1 | user: navg@microsoft.com
+
+<span class="hl">[2/3] LLM inference (real call, cost-tracked)...</span>
+    → 60 in / 82 out tokens, cost: <span class="val">$0.00153</span>
+
+    Span attributes:
+      governance.cost.estimated_usd:   <span class="val">0.00153</span>
+      governance.model.safety_filter:  <span class="val">"enabled"</span>
+    Event: <span class="val">content.safety.check</span>
+      hate: safe | violence: safe | self_harm: safe | sexual: safe
+
+<span class="hl">[3/3] Sending email (HITL-gated)...</span>
+    → Sent (msg_id: a438627b...)
+
+    Span attributes:
+      governance.action.type:             <span class="val">"external_communication"</span>
+      governance.action.requires_approval:<span class="val">true</span>
+      governance.action.approved_by:      <span class="val">"navg@microsoft.com"</span>
+    Event: <span class="val">action.audit</span>
+      type: email_sent | recipient_domain: acmecorp.com | pii_redacted: true
+
+<span class="hl">GOVERNANCE SUMMARY on Agent Span:</span>
+  governance.user.id:              navg@microsoft.com
+  governance.data.classification:  confidential
+  governance.compliance.tags:      [SOC2, HIPAA, ISO27001]
+  governance.cost.budget_code:     ITES-AI-2026-Q2
+  governance.cost.total_estimated: <span class="val">$0.00153</span>
+
+✅ All traces exported to Application Insights!
+</pre>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes — Demo 3</div>
+    <p><strong>Walk through each step slowly. This is the governance story.</strong></p>
+    <p>1. <em>"Step 1 — data access. Notice governance.data.sensitivity: PII. The audit event records who accessed what table, when, and how many records. Your compliance team can query this in KQL."</em></p>
+    <p>2. <em>"Step 2 — the LLM call. Real tokens, real cost. $0.00153 for this call. At 10,000 agent invocations/day, you're looking at $15/day for this agent. Budget code ITES-AI-2026-Q2 tells finance exactly where to attribute it."</em></p>
+    <p>3. <em>"Step 3 — the email. governance.action.requires_approval: true. This is human-in-the-loop as a traceable attribute. Who approved? When? It's all in the span."</em></p>
+    <p>4. <em>"Content safety check — all four categories are 'safe'. If any flags, your alerts fire. This is your safety net."</em></p>
+    <p><strong>Switch to Azure Portal</strong> → App Insights → Transaction Search. Filter by service.name = 'traces-to-trust-production'. Show the trace visually.</p>
+    <p><strong>Show KQL:</strong> Open 05_dashboard_queries.kql. Run query #5 (Governance Audit Trail) and #6 (Content Safety Dashboard).</p>
+    <p><strong>Transition:</strong> "We've covered single-process traces. But agents don't live alone — they call MCP servers, external tools, microservices. How does the trace survive crossing a process boundary?"</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 4 + LIVE DEMO 4 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment demo">
+  <div class="dot"></div>
+  <div class="time">40:00 — 10 min</div>
+  <h2>Section 4: MCP Tracing — The Cross-Process Bridge</h2>
+  <div class="content">
+    <ul>
+      <li>MCP = USB for AI agents (universal tool protocol)</li>
+      <li>Problem: each MCP call is a new process/context boundary</li>
+      <li>Solution: W3C traceparent in <code style="display:inline;background:var(--surface2);padding:2px 6px;border-radius:4px;margin:0;">params._meta</code></li>
+      <li>OTel MCP semantic conventions: mcp.method.name, mcp.protocol.version, mcp.session.id</li>
+      <li>Span pairs: CLIENT span (agent) + SERVER span (MCP server)</li>
+    </ul>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Context-set:</strong> <em>"MCP is becoming the USB for AI agents — a universal tool protocol. Copilot uses it, Claude uses it, your custom agents will use it. But without trace propagation, each MCP call is a black box."</em></p>
+    <p>Show the JSON-RPC structure. <em>"One line in _meta — that's all it takes to stitch together a distributed trace across MCP boundaries."</em></p>
+  </div>
+
+  <!-- DEMO 4 -->
+  <div class="demo-box">
+    <h3>&#x1F534; LIVE DEMO 4: MCP Tracing — Real LLM Planning + Context Propagation (5 min)</h3>
+    <code>python live/04_mcp_tracing.py</code>
+    <p>Real LLM decides MCP tools. W3C traceparent flows through params._meta. CLIENT + SERVER span pairs per tool.</p>
+    <p class="notes">This is the "wow" demo for anyone building MCP servers. Show the traceparent string matching across spans.</p>
+  </div>
+  <div class="live-output">
+    <div class="label">Expected Live Output — Demo 4</div>
+<pre>
+<span class="hl">[Step 1] LLM planning (real call — deciding tools)...</span>
+    → 74 in / 28 out tokens
+    → LLM requested <span class="val">2</span> MCP tool call(s)
+
+<span class="hl">[Step 2] MCP tool call: lookup_customer({"customer_id": "C-1001"})...</span>
+    traceparent: <span class="val">00-fbde3dc17274bd8f69cda9b71572d400-e8d9cafb...-01</span>
+    → Acme Corp (Enterprise)
+
+<span class="hl">[Step 3] MCP tool call: get_weather({"location": "Singapore"})...</span>
+    traceparent: <span class="val">00-fbde3dc17274bd8f69cda9b71572d400-f54f1447...-01</span>
+    → cloudy, 32°C
+
+<span class="hl">CLIENT span:</span>  tools/call get_weather   kind: <span class="val">SpanKind.CLIENT</span>
+  mcp.method.name:      tools/call
+  mcp.protocol.version: 2025-06-18
+  mcp.session.id:       sess_live_mcp_001
+  server.address:       mcp-server.internal.corp:8443
+
+<span class="hl">SERVER span:</span>  tools/call get_weather   kind: <span class="val">SpanKind.SERVER</span>
+  Event: mcp.context.extracted
+    traceparent: 00-fbde3dc17274bd8f69cda9b71572d400-...-01
+    propagation: W3C Trace Context via params._meta
+
+<span class="hl">SPAN HIERARCHY:</span>
+  └── invoke_agent MCPEnabledAgent
+      ├── chat gpt-5.1                    (planning)
+      ├── tools/call lookup_customer      CLIENT → SERVER
+      └── tools/call get_weather          CLIENT → SERVER
+
+  <span class="val">Same trace_id across all spans: fbde3dc17274bd8f69cda9b71572d400</span>
+</pre>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes — Demo 4</div>
+    <p><strong>This is the distributed tracing payoff.</strong></p>
+    <p>1. <em>"Look at the traceparent strings. Both MCP calls start with the same trace_id: fbde3dc1... That's the magic — the agent's trace crosses the process boundary."</em></p>
+    <p>2. <em>"CLIENT span on the agent side, SERVER span on the MCP server side. Same trace ID, parent-child linked. In a production dashboard, these render as a single distributed trace."</em></p>
+    <p>3. <em>"mcp.context.extracted event — the server explicitly logs that it received and extracted the W3C context. This is auditable proof of trace continuity."</em></p>
+    <p>4. Point out <strong>mcp.session.id</strong>: <em>"If you have long-lived MCP connections, this groups all calls within a session."</em></p>
+    <p><strong>Key line:</strong> <em>"One line in params._meta. That's all MCP server authors need to implement. The entire distributed trace stitches together automatically."</em></p>
+    <p><strong>Transition:</strong> "We've built the full stack: basic traces, agent workflows, governance, cross-process MCP. Let me share what I've learned deploying this at scale."</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 5 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">50:00 — 5 min</div>
+  <h2>Section 5: Field Patterns & Anti-Patterns</h2>
+  <div class="content">
+    <p><strong>From the field (Cognizant, Trizetto, Infosys):</strong></p>
+    <ul>
+      <li>Cognizant: 100+ apps migrated AppDynamics → App Insights for agent workloads on AKS</li>
+      <li>Trizetto: Per-tenant trace isolation for HIPAA compliance, Semantic Kernel agents</li>
+      <li>Infosys: 150+ tools, multi-agent orchestration, token cost attribution across BUs</li>
+    </ul>
+    <p><strong>Anti-patterns:</strong></p>
+    <ul>
+      <li>&#x274C; Logging PII in traces — use opt-in content capture (OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT)</li>
+      <li>&#x274C; Missing trace context across service boundaries — always propagate traceparent</li>
+      <li>&#x274C; 100% sampling in production — use TraceIdRatioBased, start at 10%</li>
+      <li>&#x274C; Custom-only attributes — use standard GenAI semconv first, then extend</li>
+      <li>&#x274C; Traces without dashboards — data without visibility is just storage cost</li>
+    </ul>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>Share specific stories:</strong></p>
+    <p><em>"Cognizant — their LangChain agents were producing great results, but the ops team had zero visibility. We added opentelemetry-instrumentation-openai-v2, routed to App Insights, and within a week they could see token consumption per agent per customer."</em></p>
+    <p><em>"Trizetto — healthcare, HIPAA. Every data access must be auditable. We added governance.data.sensitivity attributes and data.access.audit events — exactly what you saw in Demo 3. Their compliance officer signed off in one review."</em></p>
+    <p><em>"Infosys — 150+ tools, Copilot Studio's 15-tool limit was a wall. They built a custom orchestrator. Challenge: cost attribution across 8 business units. Token counts on agent spans, budget codes as attributes — problem solved."</em></p>
+    <p><strong>Anti-patterns — quick hits:</strong></p>
+    <p><em>"Number one mistake I see: logging everything including PII. Default content capture is OFF for a reason. Opt in only for debug envs."</em></p>
+    <p><em>"Number two: 100% sampling in production. We saw one team capturing every span for 200 agents — their App Insights bill was $4K/month. Sampling at 10% dropped it to $400 with no loss of insight."</em></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CLOSING -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="segment">
+  <div class="dot"></div>
+  <div class="time">55:00 — 5 min</div>
+  <h2>Closing: Your Monday Checklist + Q&A</h2>
+  <div class="content">
+    <ul>
+      <li><strong>1. Instrument</strong> — pip install opentelemetry-instrumentation-openai-v2</li>
+      <li><strong>2. Export</strong> — configure AzureMonitorTraceExporter for App Insights</li>
+      <li><strong>3. Standardize</strong> — use GenAI semantic conventions (gen_ai.*), not custom spans</li>
+      <li><strong>4. Govern</strong> — add governance.* attributes for audit trails</li>
+      <li><strong>5. Dashboard</strong> — deploy KQL queries (05_dashboard_queries.kql) for monitoring</li>
+    </ul>
+  </div>
+  <div class="insight">
+    <div class="label">Closing Line</div>
+    <div class="quote">"Traces are the receipts of trust. When your governance team can query exactly what your agent did, when, and why — that's when AI moves from prototype to production."</div>
+  </div>
+  <div class="speaker-notes">
+    <div class="label">Speaker Notes</div>
+    <p><strong>End strong.</strong> Read the closing line deliberately.</p>
+    <p>Then: <em>"The demo code is open — all 4 demos, the live versions that hit real gpt-5.1, the KQL queries, everything. Scan the QR code or grab the link."</em></p>
+    <p><strong>Q&A prep — likely questions:</strong></p>
+    <p><em>"What about PII?"</em> → Default content capture is OFF. Set OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true only in dev. Add PII scrubbing span processors for production.</p>
+    <p><em>"What about sampling?"</em> → TraceIdRatioBased sampler. 10% in production, 100% in dev. App Insights also has adaptive sampling.</p>
+    <p><em>"Can I use Jaeger/Datadog instead?"</em> → Absolutely. OTel is backend-agnostic. Add any OTLP-compatible exporter.</p>
+    <p><em>"Streaming responses?"</em> → Events capture chunks. Total tokens counted at stream completion.</p>
+    <p><em>"Multi-agent correlation?"</em> → Trace ID propagates. Each agent gets an invoke_agent span under the same trace.</p>
+    <p><em>"App Insights cost?"</em> → Log Analytics pricing, ~$2-5/GB. Use sampling to control volume.</p>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEMO COMMANDS QUICK REFERENCE -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 style="font-size: 20px; margin: 32px 0 16px;">Demo Quick Reference</h2>
+<div class="content" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;">
+  <table>
+    <tr><th>#</th><th>Demo</th><th>Command</th><th>Time</th><th>Key thing to show</th></tr>
+    <tr><td>1</td><td>Basic Tracing</td><td style="font-family:monospace;color:var(--green);">python live/01_basic_tracing.py</td><td>3 min</td><td>gen_ai.* attributes, token counts</td></tr>
+    <tr><td>2</td><td>Agent Workflow</td><td style="font-family:monospace;color:var(--green);">python live/02_agent_workflow.py</td><td>5 min</td><td>Span hierarchy, LLM tool selection</td></tr>
+    <tr><td>3</td><td>Governance + App Insights</td><td style="font-family:monospace;color:var(--green);">python live/03_appinsights.py</td><td>5 min</td><td>governance.* attrs, audit events, cost</td></tr>
+    <tr><td>4</td><td>MCP Tracing</td><td style="font-family:monospace;color:var(--green);">python live/04_mcp_tracing.py</td><td>5 min</td><td>traceparent in _meta, CLIENT→SERVER</td></tr>
+  </table>
+  <p style="color:var(--orange);font-size:12px;margin-top:12px;">Pre-flight: az login --tenant "16b3c013-d300-468d-ac64-7eda0820b6d3" | Activate venv | Have App Insights portal open</p>
+</div>
+
+<!-- Resources -->
+<h2 style="font-size: 20px; margin: 32px 0 16px;">Resources</h2>
+<div class="resource-grid">
+  <div class="resource-card">
+    <h4>OTel GenAI Agent Spans</h4>
+    <p>opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/</p>
+  </div>
+  <div class="resource-card">
+    <h4>OTel MCP Conventions</h4>
+    <p>opentelemetry.io/docs/specs/semconv/gen-ai/mcp/</p>
+  </div>
+  <div class="resource-card">
+    <h4>Azure Foundry Tracing</h4>
+    <p>learn.microsoft.com/azure/ai-foundry/concepts/trace</p>
+  </div>
+  <div class="resource-card">
+    <h4>Azure Foundry Observability</h4>
+    <p>learn.microsoft.com/azure/ai-foundry/concepts/observability</p>
+  </div>
+  <div class="resource-card">
+    <h4>OTel GenAI Model Spans</h4>
+    <p>opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/</p>
+  </div>
+  <div class="resource-card">
+    <h4>Your Prior Work</h4>
+    <p>Cognizant OTel sessions (Mar 17, 24, 31) | Axtria Workshop | MAF Migration Deck | TAG-Foundry Mapping</p>
+  </div>
+</div>
+
+<footer>
+  <p>From Traces to Trust — 24xAI APAC | Naveen Gopalakrishna | April 21, 2026</p>
+  <p style="margin-top:6px;">Live demo code: traces-to-trust/live/ | Simulated demos: traces-to-trust/demo/</p>
+</footer>
+
+</div>
+</body>
+</html>
